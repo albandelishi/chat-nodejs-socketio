@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="index.css" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div class="content-body">
+      <div class="container-fluid p-2">
+        <div class="container-message"></div>
+        <form id="chat-form">
+          <div class="mb-3">
+            <div class="row">
+              <div class="col-10">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="chat-input"
+                  placeholder="New Message"
+                />
+              </div>
+              <div class="col-2">
+                <button type="submit" class="btn btn-primary">Send</button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.socket.io/3.1.3/socket.io.min.js"
+      integrity="sha384-cPwlPLvBTa3sKAgddT6krw0cJat7egBga3DJepJyrLl4Q9/5WLra3rrnMcyTyOnh"
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      /**
+       * get element
+       */
+      const form = document.getElementById("chat-form");
+      const inputChat = document.getElementById("chat-input");
+
+      /**
+       * start socket connection to server
+       */
+      const socket = io("ws://localhost:3000");
+
+      /**
+       * socket on error
+       */
+      socket.on("connect_error", function (err) {
+        throw err;
+      });
+
+      /**
+       * socket on connect
+       */
+      socket.on("connect", function (data) {
+        console.log("connect");
+      });
+
+      /**
+       * socket on disconnected
+       */
+      socket.on("disconnect", function () {
+        console.log("disconnected");
+      });
+
+      /**
+       * get sent messages
+       */
+      socket.on("chat message", function (data) {
+        const message = data.message;
+        templateMessage("", message);
+      });
+
+      //function about template message
+      const templateMessage = (sender, message) => {
+        //div message container
+        const containerMessage = document.querySelector(".container-message");
+        //check who is the sender
+        let divClass = sender === "me" ? "darker" : "";
+        let template = `<div class="container ${divClass}">
+          <p>${message}</p>
+        </div>`;
+        containerMessage.innerHTML = containerMessage.innerHTML + template;
+      };
+
+      //form submit
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const inputValue = inputChat.value;
+        const data = {
+          message: inputValue,
+        };
+        if (inputValue) {
+          socket.emit("chat message", data);
+          inputChat.value = "";
+          templateMessage("me", inputValue);
+        }
+      });
+    </script>
+  </body>
+</html>
